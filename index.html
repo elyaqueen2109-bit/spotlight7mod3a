@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Listen & Choose — Hobbies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Kalam:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #f5f0e8; --beige: #ebe2d3; --sepia: #a67c52;
+    --sepia-dark: #8b6f47; --brown: #4a3728; --ink: #1a1a1a;
+    --red: #8b2f2f; --white: #ffffff; --green: #4a7a4a;
+  }
+  body {
+    font-family: 'Crimson Text', Georgia, serif;
+    background: var(--cream);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(166,124,82,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(139,111,71,0.08) 0%, transparent 50%);
+    min-height: 100vh; padding: 30px 15px; color: var(--ink);
+  }
+  .container {
+    max-width: 900px; margin: 0 auto;
+    background: var(--white); border-radius: 4px;
+    padding: 40px 35px;
+    box-shadow: 0 2px 4px rgba(74,55,40,0.1), 0 15px 40px rgba(74,55,40,0.15);
+    position: relative;
+  }
+  .container::before {
+    content: ''; position: absolute; top: -14px; left: 40px;
+    width: 130px; height: 30px;
+    background: repeating-linear-gradient(45deg, rgba(166,124,82,0.7) 0 6px, rgba(217,200,169,0.85) 6px 12px);
+    transform: rotate(-3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  }
+  header {
+    text-align: center; margin-bottom: 25px;
+    padding-bottom: 20px; border-bottom: 2px dashed var(--sepia);
+    position: relative;
+  }
+  h1 {
+    font-family: 'Caveat', cursive; color: var(--brown);
+    font-size: 64px; line-height: 1; margin-bottom: 8px;
+  }
+  .subtitle {
+    font-family: 'Special Elite', monospace; color: var(--sepia-dark);
+    font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+  }
+  .header-actions {
+    position: absolute; top: 15px; right: 15px;
+  }
+  .sound-toggle {
+    background: var(--cream); border: 2px solid var(--sepia);
+    border-radius: 50%; width: 44px; height: 44px;
+    font-size: 20px; cursor: pointer; transition: all 0.2s;
+  }
+  .sound-toggle:hover { background: var(--beige); transform: scale(1.08); }
+  .sound-toggle.muted { opacity: 0.5; }
+
+  h2 {
+    font-family: 'Caveat', cursive; color: var(--brown);
+    font-size: 42px; margin-bottom: 5px; line-height: 1;
+    text-align: center;
+  }
+  .section-label {
+    font-family: 'Special Elite', monospace;
+    color: var(--sepia-dark); font-size: 12px;
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 20px; display: block; text-align: center;
+  }
+
+  /* Игровая панель */
+  .game-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; padding: 12px 18px;
+    background: var(--cream); border-radius: 4px;
+    font-family: 'Special Elite', monospace;
+    font-size: 14px; color: var(--brown);
+  }
+  .game-header .round { font-weight: 700; }
+  .game-header .score { color: var(--green); font-weight: 700; }
+
+  /* Сетка карточек */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 20px 0;
+  }
+  @media (max-width: 600px) { .cards-grid { gap: 10px; } }
+
+  .game-card {
+    position: relative;
+    background: var(--white);
+    border: 3px solid var(--sepia);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 var(--beige);
+    cursor: pointer;
+    transition: all 0.25s;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+  }
+  .game-card:hover:not(.done) {
+    transform: translateY(-3px);
+    box-shadow: 5px 7px 0 var(--sepia);
+  }
+  
+  .game-image {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-repeat: no-repeat;
+    background-color: var(--cream);
+  }
+
+  /* Правильно / Неправильно */
+  .game-card.correct {
+    border-color: var(--green);
+    animation: pulse 0.5s ease;
+  }
+  .game-card.correct::after {
+    content: '✓';
+    position: absolute; top: 8px; right: 12px;
+    font-size: 40px; color: var(--green);
+    z-index: 5; font-weight: 700; text-shadow: 0 0 8px #fff;
+  }
+  
+  .game-card.wrong {
+    border-color: var(--red);
+    animation: shake 0.4s ease;
+  }
+  .game-card.wrong::after {
+    content: '✕';
+    position: absolute; top: 8px; right: 12px;
+    font-size: 40px; color: var(--red);
+    z-index: 5; font-weight: 700; text-shadow: 0 0 8px #fff;
+  }
+  .game-card.done { cursor: default; }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .controls {
+    text-align: center; margin: 25px 0;
+  }
+  .btn-play {
+    background: var(--brown); color: var(--cream);
+    border: none; padding: 16px 32px;
+    border-radius: 4px;
+    font-family: 'Special Elite', monospace;
+    font-size: 16px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer;
+    box-shadow: 3px 3px 0 var(--sepia); transition: all 0.2s;
+  }
+  .btn-play:hover {
+    background: #3a2a1d;
+    transform: translateY(-2px);
+    box-shadow: 5px 5px 0 var(--sepia);
+  }
+  .word-display {
+    font-family: 'Caveat', cursive;
+    font-size: 36px;
+    color: var(--brown);
+    text-align: center;
+    min-height: 50px;
+    margin: 10px 0;
+  }
+  .word-display.hint { color: var(--green); }
+  
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Listen & Choose</h1>
+    <p class="subtitle">Spotlight 7 · Module 3 · Hobbies</p>
+    <div class="header-actions">
+      <button id="soundToggle" class="sound-toggle" onclick="toggleSound()">🔊</button>
+    </div>
+  </header>
+
+  <div class="game-header">
+    <span class="round" id="roundDisplay">Round 1 of 12</span>
+    <span class="score" id="scoreDisplay">Score: 0 ✓</span>
+  </div>
+
+  <div class="cards-grid" id="gameGrid"></div>
+
+  <div class="word-display" id="wordDisplay">— — —</div>
+
+  <div class="controls">
+    <button class="btn-play" onclick="playCurrentWord()">🔊 Play again</button>
+  </div>
+</div>
+
+<script>
+// ============ SOUND ============
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playTone(freq, startTime, duration, type = 'sine', volume = 0.15) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(startTime); osc.stop(startTime + duration);
+}
+function playCorrect() {
+  if (!soundEnabled) return; initAudio();
+  const now = audioCtx.currentTime;
+  playTone(523.25, now, 0.12); playTone(659.25, now + 0.08, 0.12); playTone(783.99, now + 0.16, 0.25);
+}
+function playWrong() {
+  if (!soundEnabled) return; initAudio();
+  const now = audioCtx.currentTime;
+  playTone(220, now, 0.15, 'sine', 0.08); playTone(180, now + 0.1, 0.25, 'sine', 0.08);
+}
+function playFanfare() {
+  if (!soundEnabled) return; initAudio();
+  const now = audioCtx.currentTime;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => playTone(f, now + i * 0.12, 0.18, 'triangle', 0.12));
+}
+function speakPhrase(text, lang = 'en-GB', rate = 0.9) {
+  if (!soundEnabled || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = rate; u.pitch = 1.1;
+  window.speechSynthesis.speak(u);
+}
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById('soundToggle');
+  btn.textContent = soundEnabled ? '🔊' : '🔇';
+  btn.classList.toggle('muted', !soundEnabled);
+  if (!soundEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+document.addEventListener('click', initAudio, { once: true });
+
+// ============ DATA ============
+const hobbies = [
+  { word: 'skateboarding', img: 'hobbies_1.jpg', x: 4, y: 1, w: 410, h: 425 },
+  { word: 'ice-skating',   img: 'hobbies_1.jpg', x: 423, y: 7, w: 410, h: 421 },
+  { word: 'boxing',        img: 'hobbies_1.jpg', x: 840, y: 7, w: 410, h: 408 },
+  { word: 'fencing',       img: 'hobbies_1.jpg', x: 13, y: 434, w: 404, h: 380 },
+  { word: 'football',      img: 'hobbies_1.jpg', x: 431, y: 434, w: 400, h: 374 },
+  
+  { word: 'sewing',        img: 'hobbies_2.jpg', x: 6, y: 3, w: 421, h: 421 },
+  { word: 'writing stories',img:'hobbies_2.jpg', x: 431, y: 11, w: 406, h: 412 },
+  { word: 'knitting',      img: 'hobbies_2.jpg', x: 840, y: 7, w: 410, h: 419 },
+  { word: 'painting',      img: 'hobbies_2.jpg', x: 9, y: 423, w: 419, h: 417 },
+  { word: 'songwriting',   img: 'hobbies_2.jpg', x: 436, y: 428, w: 397, h: 408 },
+  
+  { word: 'collecting stamps', img: 'hobbies_3.jpg', x: 6, y: 3, w: 412, h: 421 },
+  { word: 'playing chess',     img: 'hobbies_3.jpg', x: 421, y: 1, w: 429, h: 423 }
+];
+
+let gameOrder = [];
+let currentRoundIndex = 0;
+let score = 0;
+let isLocked = false;
+let imgDimensions = {};
+
+// ============ INIT GAME ============
+async function initGame() {
+  await loadImages();
+  
+  gameOrder = [...hobbies].sort(() => Math.random() - 0.5);
+  currentRoundIndex = 0;
+  score = 0;
+  
+  document.getElementById('scoreDisplay').textContent = `Score: 0 ✓`;
+  document.getElementById('wordDisplay').textContent = '— — —';
+  document.getElementById('wordDisplay').className = 'word-display';
+  
+  renderRound();
+}
+
+function loadImages() {
+  return new Promise((resolve) => {
+    const unique = [...new Set(hobbies.map(h => h.img))];
+    let loaded = 0;
+    unique.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        imgDimensions[src] = { w: img.naturalWidth, h: img.naturalHeight };
+        loaded++;
+        if (loaded === unique.length) resolve();
+      };
+      img.onerror = () => {
+        loaded++;
+        if (loaded === unique.length) resolve();
+      };
+    });
+  });
+}
+
+// ============ RENDER ROUND ============
+function renderRound() {
+  if (currentRoundIndex >= gameOrder.length) {
+    document.getElementById('roundDisplay').textContent = `🏆 Done!`;
+    document.getElementById('wordDisplay').textContent = `Score: ${score} of ${gameOrder.length}`;
+    document.getElementById('gameGrid').innerHTML = '';
+    playFanfare();
+    speakPhrase("Perfect! You got them all!");
+    return;
+  }
+
+  const correctItem = gameOrder[currentRoundIndex];
+  document.getElementById('roundDisplay').textContent = `Round ${currentRoundIndex + 1} of ${gameOrder.length}`;
+
+  const others = hobbies.filter(h => h.word !== correctItem.word);
+  const distractors = [...others].sort(() => Math.random() - 0.5).slice(0, 2);
+
+  // Карточки
+  let cards = [
+    { ...correctItem, isCorrect: true },
+    { ...distractors[0], isCorrect: false },
+    { ...distractors[1], isCorrect: false }
+  ];
+
+  // 🛡️ ЖЕЛЕЗОБЕТОННОЕ ПЕРЕМЕШИВАНИЕ (Фишер-Йетс)
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+
+  const grid = document.getElementById('gameGrid');
+  grid.innerHTML = '';
+
+  cards.forEach(cardData => {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    
+    const img = document.createElement('div');
+    img.className = 'game-image';
+    card.appendChild(img);
+    
+    card.onclick = () => handleCardClick(card, cardData);
+    grid.appendChild(card);
+
+    requestAnimationFrame(() => {
+      const dim = imgDimensions[cardData.img];
+      if (!dim) return;
+      
+      const rect = img.getBoundingClientRect();
+      const cw = rect.width;
+      const ch = rect.height;
+      if (cw === 0 || ch === 0) return;
+
+      const scaleX = cw / cardData.w;
+      const scaleY = ch / cardData.h;
+      const scale = Math.max(scaleX, scaleY);
+
+      const bgW = dim.w * scale;
+      const bgH = dim.h * scale;
+      const bgX = -(cardData.x * scale) + (cw - cardData.w * scale) / 2;
+      const bgY = -(cardData.y * scale) + (ch - cardData.h * scale) / 2;
+
+      img.style.backgroundImage = `url('${cardData.img}')`;
+      img.style.backgroundSize = `${bgW}px ${bgH}px`;
+      img.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    });
+  });
+
+  document.getElementById('wordDisplay').textContent = '— — —';
+  document.getElementById('wordDisplay').className = 'word-display';
+  
+  isLocked = true;
+  setTimeout(() => {
+    playCurrentWord();
+    isLocked = false;
+  }, 500);
+}
+
+function playCurrentWord() {
+  if (currentRoundIndex >= gameOrder.length) return;
+  const word = gameOrder[currentRoundIndex].word;
+  speakPhrase(word, 'en-GB', 0.8);
+}
+
+// ============ CLICK LOGIC ============
+function handleCardClick(cardEl, cardData) {
+  if (isLocked) return;
+  if (cardEl.classList.contains('done')) return;
+
+  if (cardData.isCorrect) {
+    cardEl.classList.add('correct', 'done');
+    score++;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} ✓`;
+    
+    document.getElementById('wordDisplay').textContent = `✓ ${cardData.word}`;
+    document.getElementById('wordDisplay').className = 'word-display hint';
+    
+    playCorrect();
+    speakPhrase("Well done!", 'en-GB', 1.0);
+
+    document.querySelectorAll('.game-card').forEach(c => c.classList.add('done'));
+
+    isLocked = true;
+    setTimeout(() => {
+      currentRoundIndex++;
+      isLocked = false;
+      renderRound();
+    }, 2000);
+
+  } else {
+    cardEl.classList.add('wrong');
+    playWrong();
+    speakPhrase("Try again", 'en-GB', 1.0);
+    setTimeout(() => cardEl.classList.remove('wrong'), 600);
+  }
+}
+
+initGame();
+</script>
+</body>
+</html>
